@@ -1310,6 +1310,43 @@ function stopIntro(){
   try{ a.pause(); a.currentTime=0; }catch(e){}
 }
 
+/* ====================================================================
+   MISCH-ENGINE ("KI"): sorgt dafür, dass nie alles gleich ist.
+   Wählt bei jedem Login zufällig aus Text-Pools und mischt Reihenfolgen.
+   Das Easter Egg für Alen bleibt bewusst FEST.
+   ==================================================================== */
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+// Verschiedene Begrüßungen (Login) – {n} wird durch den Namen ersetzt
+const GREETINGS = [
+  'Hallo {n}, fangen wir an.',
+  'Willkommen zurück, {n}. Auf geht\'s!',
+  'Schön dass du da bist, {n}. Zeit zu lernen.',
+  'Servus {n}, lass uns prüfungsreif werden.',
+  'Na {n}, bereit für deine Bestform? Los geht\'s.',
+  'Guten Tag {n}. Jeder Tag bringt dich näher ans Ziel.',
+  'Hey {n}, dein Training wartet. Volle Konzentration!',
+  'Moin {n}, heute machen wir dich ein Stück stärker.'
+];
+// Motivationssprüche für die Tagesansage
+const MOTIV_LINES = [
+  'Das musst du schaffen, um dein Ziel zu erreichen. Los geht\'s!',
+  'Disziplin schlägt Talent. Bleib dran!',
+  'Jede Frage heute ist ein Schritt zur bestandenen Prüfung.',
+  'Konsequenz ist dein Vorteil. Zieh es durch!',
+  'Wer heute übt, lacht in der Prüfung. Auf geht\'s!',
+  'Kein Tag ohne Fortschritt. Du packst das!',
+  'Dranbleiben zahlt sich aus. Zeig dir selbst, was du kannst!'
+];
+// Sprüche, wenn das Tagesziel schon erreicht ist
+const DONE_LINES = [
+  '{n}, du hast heute schon alles geschafft. Stark! Wiederhole jetzt deine Fehler, um es zu festigen.',
+  'Top, {n}! Tagesziel erreicht. Eine Runde Fehler-Wiederholung macht dich noch sicherer.',
+  '{n}, alles erledigt für heute. Klasse Disziplin! Festige es mit deinen Fehlerfragen.',
+  'Geschafft, {n}! Heute schon prüfungsreif trainiert. Wiederholung hält es frisch.'
+];
+function fillName(t){ return t.replace('{n}', USER.display); }
+
 function enterApp(){
   document.getElementById('login').style.display='none';
   const app=document.getElementById('app');
@@ -1319,10 +1356,10 @@ function enterApp(){
   ensureDaily();
   renderTopbar();
   navTo('home');
-  // Begrüßung per Sprachausgabe (kurz verzögert, damit Stimmen geladen sind)
+  // Begrüßung per Sprachausgabe – jedes Mal zufällig anders (Misch-Engine)
   setTimeout(()=>{
-    speak(`Hallo ${USER.display}, fangen wir an.`);
-    // EASTER EGG für Alen
+    speak(fillName(pick(GREETINGS)));
+    // EASTER EGG für Alen (bleibt IMMER gleich)
     if(USER.name==='alen'){
       setTimeout(()=>{
         speakQueue('Ein guter Rat von einem guten Kollegen namens Eren: Leg meine Eier.');
@@ -1532,12 +1569,14 @@ let homeAnnounced=false;
 function announceToday(){
   const dpct=dailyOverallPct();
   if(dpct>=100){
-    speak(`${USER.display}, du hast heute schon alles geschafft. Stark! Wiederhole jetzt deine Fehler, um es zu festigen.`);
+    speak(fillName(pick(DONE_LINES)));
     return;
   }
-  const open=EXAM_AREAS.filter(a=>{const p=dailyAreaProgress(a.id);return p.done<p.total;}).map(a=>a.name);
+  // Reihenfolge der offenen Bereiche zufällig mischen (Misch-Engine)
+  const open=shuffle(EXAM_AREAS.filter(a=>{const p=dailyAreaProgress(a.id);return p.done<p.total;}).map(a=>a.name));
   let txt=`${USER.display}, heute stehen ${open.length} Bereiche an: ${open.join(', ')}. `;
-  txt+=`Insgesamt ${EXAM_AREAS.length*QUESTIONS_PER_AREA} Pflichtfragen. Das musst du schaffen, um dein Ziel zu erreichen. Los geht's!`;
+  txt+=`Insgesamt ${EXAM_AREAS.length*QUESTIONS_PER_AREA} Pflichtfragen. `;
+  txt+=pick(MOTIV_LINES);
   speak(txt);
 }
 
@@ -1552,7 +1591,7 @@ function startDailyArea(areaId){
   const area=EXAM_AREAS.find(a=>a.id===areaId);
   const d=SP.daily[todayKey()][areaId];
   if(!d.qids.length){ showToast('Keine Fragen in diesem Bereich.'); return; }
-  drill={ areaId, qids:d.qids.slice(), pos:0, mode:'daily', title:area.name, color:area.color };
+  drill={ areaId, qids:shuffle(d.qids.slice()), pos:0, mode:'daily', title:area.name, color:area.color };
   speak(`Bereich ${area.name}. ${area.desc}. Konzentration!`);
   navTo('cards'); renderDrillCard();
 }
@@ -1585,8 +1624,11 @@ function renderCardsPage(){
 }
 function setCardTopic(t){ cardState.topic=t; drill=null; renderCardsPage(); }
 function buildDeck(topic){
-  const src=topic==='all'?ALL_QA.slice():ALL_QA.filter(q=>q.tid===topic);
-  // Spaced Repetition light: noch nicht gewusste + Fehler zuerst
+  let src=topic==='all'?ALL_QA.slice():ALL_QA.filter(q=>q.tid===topic);
+  // Erst durchmischen (Misch-Engine), damit gleiche Prioritätsstufe nie
+  // in identischer Reihenfolge erscheint ...
+  shuffle(src);
+  // ... dann Spaced Repetition light: Fehler zuerst, dann Neue, dann Gewusste
   src.sort((a,b)=>{
     const aw=SP.wrong.includes(qid(a))?0:SP.known.includes(qid(a))?2:1;
     const bw=SP.wrong.includes(qid(b))?0:SP.known.includes(qid(b))?2:1;
