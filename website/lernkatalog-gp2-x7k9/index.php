@@ -273,15 +273,16 @@ h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:1.4px;color:var(--
 </head>
 <body>
 
-<!-- ====================== PLATZHALTER-SOUND ====================== -->
-<!-- Diese Audiodatei wird beim Laden gestartet. ERSETZE die Quelle -->
-<!-- unten ('src') später durch deine eigene Datei (z.B. intro.mp3),-->
-<!-- die du in denselben Ordner legst. Aktuell leerer Platzhalter.   -->
-<!-- Hinweis: iOS/Safari erlauben Autoplay mit Ton erst NACH einer    -->
-<!-- Nutzer-Interaktion (Tipp/Klick) – der Sound startet daher        -->
-<!-- spätestens beim ersten Antippen zuverlässig.                     -->
+<!-- ====================== INTRO-SOUND ====================== -->
+<!-- Verdrahtet mit der vorhandenen Website-Audiodatei.              -->
+<!-- Pfad relativ zu diesem Ordner: ../assets/audio/...             -->
+<!-- ERSETZEN: einfach eine andere Datei in /assets/audio/ ablegen  -->
+<!-- und den 'src' unten anpassen.                                  -->
+<!-- Hinweis: iOS/Safari erlauben Autoplay mit Ton erst NACH einer   -->
+<!-- Nutzer-Interaktion (Tipp/Klick) – der Sound startet daher       -->
+<!-- spätestens beim ersten Antippen (Login-Button) zuverlässig.     -->
 <audio id="introSound" preload="auto">
-  <!-- <source src="intro.mp3" type="audio/mpeg"> -->
+  <source src="../assets/audio/oh-intro.mp3.mp3" type="audio/mpeg">
 </audio>
 
 <!-- ====================== LOGIN ====================== -->
