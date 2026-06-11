@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Backups & Archive
+Backup.zip
+website.zip
+*.bak
+
+# Editor
+*.code-workspace
