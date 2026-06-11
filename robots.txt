@@ -1,0 +1,9 @@
+# robots.txt – OH Haustechnik
+#
+# Der private Lernbereich soll NICHT von Suchmaschinen erfasst werden.
+# Zusätzlich steht in der Seite selbst <meta name="robots" content="noindex, nofollow">.
+# Es gibt bewusst KEINEN Sitemap-Eintrag für diesen Pfad.
+
+User-agent: *
+Disallow: /lernkatalog-gp2-x7k9/
+Disallow: /lernkatalog-gp2-x7k9
