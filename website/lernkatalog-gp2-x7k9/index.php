@@ -1278,9 +1278,36 @@ function tryPlayIntro(){
   if(!a) return;
   // Nur abspielen, wenn eine Quelle hinterlegt wurde (Platzhalter sonst leer)
   if(a.querySelector('source')){
+    // Leise starten (30%), damit die Sprachbegrüßung klar hörbar bleibt
+    a.volume=0.30;
     a.currentTime=0;
     a.play().catch(()=>{ /* Autoplay evtl. blockiert – kein Problem */ });
+    // Nach ~18 s sanft ausblenden und stoppen (Intro soll nicht 4 Min laufen)
+    scheduleIntroFade(a);
   }
+}
+// Konfiguration: Dauer bis zum Ausblenden + Ausblend-Länge
+const INTRO_PLAY_MS = 18000; // wie lange die Musik spielt, bevor sie ausblendet
+const INTRO_FADE_MS = 2500;  // Dauer des sanften Ausblendens
+function scheduleIntroFade(a){
+  if(a._fadeT) clearTimeout(a._fadeT);
+  if(a._fadeI) clearInterval(a._fadeI);
+  a._fadeT=setTimeout(()=>{
+    const start=a.volume, steps=25, dt=INTRO_FADE_MS/steps;
+    let i=0;
+    a._fadeI=setInterval(()=>{
+      i++;
+      a.volume=Math.max(0, start*(1-i/steps));
+      if(i>=steps){ clearInterval(a._fadeI); a.pause(); a.currentTime=0; a.volume=start; }
+    }, dt);
+  }, INTRO_PLAY_MS);
+}
+function stopIntro(){
+  const a=document.getElementById('introSound');
+  if(!a) return;
+  if(a._fadeT) clearTimeout(a._fadeT);
+  if(a._fadeI) clearInterval(a._fadeI);
+  try{ a.pause(); a.currentTime=0; }catch(e){}
 }
 
 function enterApp(){
@@ -1308,6 +1335,7 @@ function enterApp(){
 function logout(){
   save();
   try{ speechSynthesis.cancel(); }catch(e){}
+  stopIntro();
   USER=null; SP=null;
   document.getElementById('app').style.display='none';
   document.getElementById('login').style.display='flex';
@@ -1874,8 +1902,8 @@ document.getElementById('logoutBtn').addEventListener('click', logout);
 document.getElementById('speakBtn').addEventListener('click', ()=>{
   speakOn=!speakOn;
   document.getElementById('speakBtn').textContent=speakOn?'🔊':'🔇';
-  if(!speakOn){ try{speechSynthesis.cancel();}catch(e){} } else { speak('Sprachausgabe an.'); }
-  showToast(speakOn?'🔊 Sprachausgabe an':'🔇 Sprachausgabe aus');
+  if(!speakOn){ try{speechSynthesis.cancel();}catch(e){} stopIntro(); } else { speak('Sprachausgabe an.'); }
+  showToast(speakOn?'🔊 Sprachausgabe an':'🔇 Ton aus');
 });
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>{ if(b.dataset.nav!=='cards') drill=null; navTo(b.dataset.nav); }));
 
